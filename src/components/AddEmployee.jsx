@@ -49,6 +49,8 @@ const AddEmployee = () => {
     joiningDate: null,
     password: "",
     confirmPassword: "",
+    location:"",
+    address:"",
     department: "",
     designation: "",
     role: "",
@@ -113,7 +115,7 @@ const AddEmployee = () => {
   // Validate Form
   // ============================
   const validateForm = () => {
-    const { fullName, email, phone, gender, dob, joiningDate, password, confirmPassword, department, designation, role } = formData;
+    const { fullName, email, phone, gender, dob, joiningDate, password, confirmPassword, department, designation, role, location, address } = formData;
 
     if (!fullName) return "Full Name is required";
     if (!email) return "Email is required";
@@ -124,8 +126,12 @@ const AddEmployee = () => {
     if (!department) return "Department is required";
     if (!designation) return "Designation is required";
     if (!role) return "Role is required";
+    if(!location) return "location is required";
+    if(!address) return "address is required";
     if (!password) return "Password is required";
     if (password !== confirmPassword) return "Passwords do not match";
+    
+    
 
     return null;
   };
@@ -155,6 +161,8 @@ const AddEmployee = () => {
         <strong>Department:</strong> ${formData.department} <br/>
         <strong>Designation:</strong> ${formData.designation} <br/>
         <strong>Role:</strong> ${formData.role} <br/>
+         <strong>Location:</strong> ${formData.location} <br/>
+          <strong>Address:</strong> ${formData.address} <br/>
       `,
       icon: "question",
       showCancelButton: true,
@@ -173,6 +181,8 @@ const AddEmployee = () => {
     data.append("department", formData.department);
     data.append("designation", formData.designation);
     data.append("gender", formData.gender);
+    data.append("location", formData.location);
+    data.append("address", formData.address);
     data.append("dob", formData.dob?.toISOString());
     data.append("joining_date", formData.joiningDate?.toISOString());
     if (formData.profileImage) data.append("profileImage", formData.profileImage);
@@ -201,6 +211,8 @@ const AddEmployee = () => {
         department: "",
         designation: "",
         role: "",
+        location:"",
+        address:"",
         profileImage: null,
       });
     } catch (err) {
@@ -338,6 +350,33 @@ const AddEmployee = () => {
               ))}
             </select>
           </div>
+          {/* LOCATION + ADDRESS */}
+<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+  <div>
+    <label className="font-semibold">Location</label>
+    <input
+      type="text"
+      name="location"
+      value={formData.location}
+      onChange={handleChange}
+      placeholder="Enter location"
+      className="w-full p-3 border rounded"
+    />
+  </div>
+
+  <div>
+    <label className="font-semibold">Address</label>
+    <input
+      type="text"
+      name="address"
+      value={formData.address}
+      onChange={handleChange}
+      placeholder="Enter address"
+      className="w-full p-3 border rounded"
+    />
+  </div>
+</div>
+
 
           {/* PASSWORD + CONFIRM */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
