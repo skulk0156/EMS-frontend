@@ -96,7 +96,7 @@ const EditEmployee = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    name: '', email: '', role: '', department: '', designation: '', phone: '', joining_date: '', dob: ''
+    employeeId:'',name: '', email: '', role: '', department: '', designation: '', phone: '', gender:'',joining_date: '', dob: '',location:'',address:'',profileImage:'',
   });
   const [profileImage, setProfileImage] = useState('');
   const [file, setFile] = useState(null);
@@ -109,16 +109,23 @@ const EditEmployee = () => {
       try {
         const res = await axios.get(`http://localhost:5000/api/users/${id}`);
         const data = res.data;
-        setFormData({
-          name: data.name || '',
-          email: data.email || '',
-          role: data.role || '',
-          department: data.department || '',
-          designation: data.designation || '',
-          phone: data.phone || '',
-          joining_date: data.joining_date?.slice(0, 10) || '',
-          dob: data.dob?.slice(0, 10) || '',
+       setFormData({
+           employeeId: data.employeeId || '',
+             name: data.name || '',
+             email: data.email || '',
+            phone: data.phone || '',
+            gender: data.gender || '',
+           dob: data.dob?.slice(0, 10) || '',
+            joining_date: data.joining_date?.slice(0, 10) || '',
+            department: data.department || '',
+            designation: data.designation || '',
+            role: data.role || '',
+            location: data.location || '',
+            address: data.address || '',
+          
+            profileImage: data.profileImage || ''
         });
+
         setProfileImage(data.profileImage || '');
       } catch (err) {
         console.error(err);
@@ -194,32 +201,94 @@ const EditEmployee = () => {
                 required
               />
             </div>
+<div className="flex flex-col">
+  <label className="mb-1 font-semibold text-gray-700">Employee ID</label>
+  <input
+    value={formData.employeeId}
+    readOnly
+    className="px-4 py-2 border bg-gray-100 rounded-lg"
+  />
+</div>
 
-            {/* Email */}
-            <div className="flex flex-col">
-              <label className="mb-1 font-semibold text-gray-700">Email</label>
-              <input
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="Enter email"
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-                required
-              />
-            </div>
 
-            {/* Role */}
-            <div className="flex flex-col">
-              <label className="mb-1 font-semibold text-gray-700">Role</label>
-              <input
-                name="role"
-                value={formData.role}
-                onChange={handleChange}
-                placeholder="Enter role"
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-                required
-              />
-            </div>
+
+       {/* Email */}
+<div className="flex flex-col">
+  <label className="mb-1 font-semibold text-gray-700">Email</label>
+  <input
+    type="email"  
+    name="email"
+    value={formData.email}
+    onChange={handleChange}
+    placeholder="Enter email"
+    className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+    required
+  />
+</div>
+
+    {/* role */}
+         <div className="flex flex-col">
+  <label className="mb-1 font-semibold text-gray-700">Role</label>
+  <select
+    name="role"
+    value={formData.role}
+    onChange={handleChange}
+    className="px-4 py-2 border rounded-lg"
+    required
+  >
+    <option value="">Select Role</option>
+    <option value="admin">ADMIN</option>
+    <option value="manager">MANAGER</option>
+    <option value="employee">EMPLOYEE</option>
+    <option value="hr">HR</option>
+  </select>
+</div>
+
+
+{/**gender */}
+<div className="flex flex-col">
+  <label className="mb-1 font-semibold text-gray-700">Gender</label>
+  <select
+    name="gender"
+    value={formData.gender}
+    onChange={handleChange}
+    className="px-4 py-2 border rounded-lg"
+    required
+  >
+    <option value="">Select Gender</option>
+    <option value="Male">Male</option>
+    <option value="Female">Female</option>
+    <option value="Other">Other</option>
+  </select>
+</div>
+
+            {/* location */}
+<div className="flex flex-col">
+  <label className="mb-1 font-semibold text-gray-700">Location</label>
+  <input
+    name="location"
+    value={formData.location}
+    onChange={handleChange}
+    placeholder="Enter location"
+    className="px-4 py-2 border rounded-lg"
+    required
+  />
+</div>
+ {/* address */}
+
+<div className="flex flex-col md:col-span-2">
+  <label className="mb-1 font-semibold text-gray-700">Address</label>
+  <textarea
+    name="address"
+    value={formData.address}
+    onChange={handleChange}
+    rows={3}
+    placeholder="Enter address"
+    className="px-4 py-2 border rounded-lg"
+    required
+  />
+</div>
+
 
             {/* Department */}
             <div className="flex flex-col">
@@ -306,21 +375,25 @@ const EditEmployee = () => {
             </div>
           </form>
 
-          {/* Update Button */}
-          <div className="mt-6 flex justify-center gap-4">
-            <button
-              onClick={handleConfirmUpdate}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg shadow-md transition"
-            >
-              Update Employee
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate('/employees')}
-              className="bg-white text-blue-600 border-2 border-blue-600 font-semibold px-6 py-3 rounded-lg hover:bg-blue-50 shadow-md transition"
-            >
-              Cancel
-            </button>
+         
+            {/* Update Button */}
+<div className="mt-6 flex justify-center gap-4">
+  <button
+    type="submit"
+    className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg shadow-md transition"
+  >
+    Update Employee
+  </button>
+
+  <button
+    type="button"
+    onClick={() => navigate('/employees')}
+    className="bg-white text-blue-600 border-2 border-blue-600 font-semibold px-6 py-3 rounded-lg hover:bg-blue-50 shadow-md transition"
+  >
+    Cancel
+  </button>
+
+
           </div>
         </div>
       </div>

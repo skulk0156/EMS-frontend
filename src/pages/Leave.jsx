@@ -40,7 +40,7 @@ const Leave = () => {
   });
 
   // Quota for summary - change as required or fetch from backend
-  const leaveQuota = 6;
+  const leaveQuota = 4;
 
   useEffect(() => {
     const role = localStorage.getItem("role") || "";
