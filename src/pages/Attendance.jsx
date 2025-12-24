@@ -418,21 +418,45 @@ const Attendance = () => {
                     Cancel
                   </button>
                   <button
-                    onClick={() => {
-                      setIsLoggedIn(true);
-                      const record = {
-                        empId: user?.employeeId,
-                        empName: user?.name,
-                        loginTime: loginTime,
-                        date: currentDate
-                      };
-                      setAttendanceRecord(record);
-                      localStorage.setItem('isLoggedIn', 'true');
-                      localStorage.setItem('attendanceLoginTime', loginTime);
-                      localStorage.setItem('attendanceRecord', JSON.stringify(record));
-                      setShowConfirmModal(false);
-                      setToast({ show: true, message: 'Your attendance has been confirmed!', type: 'success' });
-                    }}
+                  onClick={async () => {
+  try {
+    await axios.post("http://localhost:5000/api/attendance", {
+      employeeId: user.employeeId,
+      name: user.name,
+      date: currentDate,
+      punch_in: loginTime,
+    });
+
+    setIsLoggedIn(true);
+
+    const record = {
+      empId: user.employeeId,
+      empName: user.name,
+      loginTime,
+      date: currentDate,
+    };
+
+    setAttendanceRecord(record);
+    localStorage.setItem("isLoggedIn", "true");
+    localStorage.setItem("attendanceLoginTime", loginTime);
+    localStorage.setItem("attendanceRecord", JSON.stringify(record));
+
+    setToast({
+      show: true,
+      message: "Attendance marked successfully",
+      type: "success",
+    });
+
+    setShowConfirmModal(false);
+  } catch (error) {
+    setToast({
+      show: true,
+      message: error.response?.data?.message || "Punch-in failed",
+      type: "error",
+    });
+  }
+}}
+
                     className="flex-1 bg-green-600 text-white font-semibold py-3 rounded-lg hover:bg-green-700 transition"
                   >
                     Confirm
@@ -457,16 +481,41 @@ const Attendance = () => {
                   </div>
                 </div>
                 <button
-                  onClick={() => {
-                    setLogoutTime(currentTime);
-                    setIsLoggedIn(false);
-                    localStorage.setItem('attendanceLogoutTime', currentTime);
-                    localStorage.removeItem('isLoggedIn');
-                    localStorage.removeItem('attendanceLoginTime');
-                    localStorage.removeItem('attendanceRecord');
-                    setShowConfirmModal(false);
-                    setToast({ show: true, message: 'Logout completed successfully!', type: 'success' });
-                  }}
+                  onClick={async () => {
+  try {
+    await axios.put("http://localhost:5000/api/attendance/logout", {
+      employeeId: user.employeeId,
+      date: currentDate,
+      punch_out: currentTime,
+      workingHours: formatTimer(
+        calculateWorkingHours(loginTime, currentTime)
+      ),
+    });
+
+    setLogoutTime(currentTime);
+    setIsLoggedIn(false);
+
+    localStorage.setItem("attendanceLogoutTime", currentTime);
+    localStorage.removeItem("isLoggedIn");
+    localStorage.removeItem("attendanceLoginTime");
+    localStorage.removeItem("attendanceRecord");
+
+    setToast({
+      show: true,
+      message: "Logout completed successfully",
+      type: "success",
+    });
+
+    setShowConfirmModal(false);
+  } catch (error) {
+    setToast({
+      show: true,
+      message: error.response?.data?.message || "Logout failed",
+      type: "error",
+    });
+  }
+}}
+
                   className="w-full bg-red-600 text-white font-semibold py-3 rounded-lg hover:bg-red-700 transition"
                 >
                   Close
