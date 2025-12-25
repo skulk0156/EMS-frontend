@@ -26,7 +26,7 @@ const Navbar = () => {
     ...(role === 'admin' || role === 'manager' || role === 'employee'
       ? [
           { name: 'Team', path: '/team' },
-          { name: 'Tasks', path: '/tasks' },
+          { name: 'Tickets', path: '/tickets' },
           { name: 'Projects', path: '/projects' },
         ]
       : []),

@@ -91,49 +91,91 @@ const designations = [
   "Customer Success Manager"
 ];
 
-
 const EditEmployee = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    employeeId:'',name: '', email: '', role: '', department: '', designation: '', phone: '', gender:'',joining_date: '', dob: '',location:'',address:'',profileImage:'',
+    employeeId: '', 
+    name: '', 
+    email: '', 
+    role: '', 
+    department: '', 
+    designation: '', 
+    phone: '', 
+    gender: '', 
+    joining_date: '', 
+    dob: '', 
+    location: '', 
+    address: '', 
+    profileImage: ''
   });
-  const [profileImage, setProfileImage] = useState('');
   const [file, setFile] = useState(null);
   const [error, setError] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [notification, setNotification] = useState({ message: '', type: '' });
+  const [loading, setLoading] = useState(true);
+
+  // Get authentication token
+  const getToken = () => {
+    return localStorage.getItem('token');
+  };
+
+  // Create axios instance with auth headers
+  const api = axios.create({
+    baseURL: 'http://localhost:5000',
+    headers: {
+      'Authorization': `Bearer ${getToken()}`
+    }
+  });
 
   useEffect(() => {
     const fetchEmployee = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/users/${id}`);
+        setLoading(true);
+        const token = getToken();
+        
+        if (!token) {
+          setError('Authentication required. Please login.');
+          navigate('/login');
+          return;
+        }
+        
+        const res = await api.get(`/api/users/${id}`);
         const data = res.data;
-       setFormData({
-           employeeId: data.employeeId || '',
-             name: data.name || '',
-             email: data.email || '',
-            phone: data.phone || '',
-            gender: data.gender || '',
-           dob: data.dob?.slice(0, 10) || '',
-            joining_date: data.joining_date?.slice(0, 10) || '',
-            department: data.department || '',
-            designation: data.designation || '',
-            role: data.role || '',
-            location: data.location || '',
-            address: data.address || '',
-          
-            profileImage: data.profileImage || ''
+        
+        setFormData({
+          employeeId: data.employeeId || '',
+          name: data.name || '',
+          email: data.email || '',
+          phone: data.phone || '',
+          gender: data.gender || '',
+          dob: data.dob?.slice(0, 10) || '',
+          joining_date: data.joining_date?.slice(0, 10) || '',
+          department: data.department || '',
+          designation: data.designation || '',
+          role: data.role || '',
+          location: data.location || '',
+          address: data.address || '',
+          profileImage: data.profileImage || ''
         });
-
-        setProfileImage(data.profileImage || '');
+        
+        setError('');
       } catch (err) {
         console.error(err);
-        setError('Failed to load employee data');
+        if (err.response?.status === 401) {
+          setError('Authentication failed. Please login again.');
+          localStorage.removeItem('token');
+          setTimeout(() => navigate('/login'), 1500);
+        } else {
+          setError('Failed to load employee data');
+        }
+      } finally {
+        setLoading(false);
       }
     };
+    
     fetchEmployee();
-  }, [id]);
+  }, [id, navigate]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -143,31 +185,85 @@ const EditEmployee = () => {
     setFile(e.target.files[0]);
   };
 
-  // Show confirmation modal
   const handleConfirmUpdate = (e) => {
     e.preventDefault();
     setShowModal(true);
   };
 
-  // Actual submit
   const handleSubmit = async () => {
-    const payload = new FormData();
-    Object.keys(formData).forEach(key => payload.append(key, formData[key]));
-    if (file) payload.append('profileImage', file);
-
     try {
-      await axios.put(`http://localhost:5000/api/users/${id}`, payload, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+      const token = getToken();
+      
+      if (!token) {
+        setNotification({ message: 'Authentication required. Please login.', type: 'error' });
+        navigate('/login');
+        return;
+      }
+      
+      // Create a clean data object without profileImage
+      const updateData = { ...formData };
+      delete updateData.profileImage;
+      
+      // Create FormData object
+      const payload = new FormData();
+      
+      // Append all form data
+      Object.keys(updateData).forEach(key => {
+        payload.append(key, updateData[key]);
       });
+      
+      // Append file if exists
+      if (file) {
+        payload.append('profileImage', file);
+      }
+      
+      // Log FormData for debugging (in development)
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Form data being sent:');
+        for (let pair of payload.entries()) {
+          console.log(`${pair[0]}: ${pair[1]}`);
+        }
+      }
+      
+      // Make the API request
+      const response = await api.put(`/api/users/${id}`, payload);
+      
       setNotification({ message: 'Employee updated successfully!', type: 'success' });
       setShowModal(false);
       setTimeout(() => navigate('/employees'), 1500);
     } catch (err) {
-      console.error(err);
-      setNotification({ message: 'Failed to update employee.', type: 'error' });
+      console.error('Update error:', err);
+      
+      // Handle different error types
+      if (err.response?.status === 401) {
+        setNotification({ message: 'Authentication failed. Please login again.', type: 'error' });
+        localStorage.removeItem('token');
+        setTimeout(() => navigate('/login'), 1500);
+      } else if (err.response?.status === 400) {
+        // Bad request - show server error message if available
+        const errorMessage = err.response?.data?.message || 'Invalid data provided';
+        setNotification({ message: `Error: ${errorMessage}`, type: 'error' });
+      } else {
+        setNotification({ 
+          message: `Failed to update employee: ${err.message || 'Unknown error'}`, 
+          type: 'error' 
+        });
+      }
       setShowModal(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col min-h-screen bg-blue-50">
+        <Navbar />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-xl">Loading employee data...</div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-blue-50">
@@ -177,7 +273,12 @@ const EditEmployee = () => {
         <div className="w-full max-w-3xl bg-white rounded-2xl shadow-xl p-8">
           <h2 className="text-3xl font-bold text-blue-700 mb-6 text-center">Edit Employee</h2>
 
-          {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
+          {error && (
+            <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-center">
+              {error}
+            </div>
+          )}
+          
           {notification.message && (
             <div
               className={`mb-4 text-center px-4 py-2 rounded ${
@@ -201,94 +302,77 @@ const EditEmployee = () => {
                 required
               />
             </div>
-<div className="flex flex-col">
-  <label className="mb-1 font-semibold text-gray-700">Employee ID</label>
-  <input
-    value={formData.employeeId}
-    readOnly
-    className="px-4 py-2 border bg-gray-100 rounded-lg"
-  />
-</div>
+            
+            <div className="flex flex-col">
+              <label className="mb-1 font-semibold text-gray-700">Employee ID</label>
+              <input
+                value={formData.employeeId}
+                readOnly
+                className="px-4 py-2 border bg-gray-100 rounded-lg"
+              />
+            </div>
 
+            {/* Email */}
+            <div className="flex flex-col">
+              <label className="mb-1 font-semibold text-gray-700">Email</label>
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="Enter email"
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                required
+              />
+            </div>
 
+            {/* Role */}
+            <div className="flex flex-col">
+              <label className="mb-1 font-semibold text-gray-700">Role</label>
+              <select
+                name="role"
+                value={formData.role}
+                onChange={handleChange}
+                className="px-4 py-2 border rounded-lg"
+                required
+              >
+                <option value="">Select Role</option>
+                <option value="admin">ADMIN</option>
+                <option value="manager">MANAGER</option>
+                <option value="employee">EMPLOYEE</option>
+                <option value="hr">HR</option>
+              </select>
+            </div>
 
-       {/* Email */}
-<div className="flex flex-col">
-  <label className="mb-1 font-semibold text-gray-700">Email</label>
-  <input
-    type="email"  
-    name="email"
-    value={formData.email}
-    onChange={handleChange}
-    placeholder="Enter email"
-    className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-    required
-  />
-</div>
+            {/* Gender */}
+            <div className="flex flex-col">
+              <label className="mb-1 font-semibold text-gray-700">Gender</label>
+              <select
+                name="gender"
+                value={formData.gender}
+                onChange={handleChange}
+                className="px-4 py-2 border rounded-lg"
+                required
+              >
+                <option value="">Select Gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
 
-    {/* role */}
-         <div className="flex flex-col">
-  <label className="mb-1 font-semibold text-gray-700">Role</label>
-  <select
-    name="role"
-    value={formData.role}
-    onChange={handleChange}
-    className="px-4 py-2 border rounded-lg"
-    required
-  >
-    <option value="">Select Role</option>
-    <option value="admin">ADMIN</option>
-    <option value="manager">MANAGER</option>
-    <option value="employee">EMPLOYEE</option>
-    <option value="hr">HR</option>
-  </select>
-</div>
-
-
-{/**gender */}
-<div className="flex flex-col">
-  <label className="mb-1 font-semibold text-gray-700">Gender</label>
-  <select
-    name="gender"
-    value={formData.gender}
-    onChange={handleChange}
-    className="px-4 py-2 border rounded-lg"
-    required
-  >
-    <option value="">Select Gender</option>
-    <option value="Male">Male</option>
-    <option value="Female">Female</option>
-    <option value="Other">Other</option>
-  </select>
-</div>
-
-            {/* location */}
-<div className="flex flex-col">
-  <label className="mb-1 font-semibold text-gray-700">Location</label>
-  <input
-    name="location"
-    value={formData.location}
-    onChange={handleChange}
-    placeholder="Enter location"
-    className="px-4 py-2 border rounded-lg"
-    required
-  />
-</div>
- {/* address */}
-
-<div className="flex flex-col md:col-span-2">
-  <label className="mb-1 font-semibold text-gray-700">Address</label>
-  <textarea
-    name="address"
-    value={formData.address}
-    onChange={handleChange}
-    rows={3}
-    placeholder="Enter address"
-    className="px-4 py-2 border rounded-lg"
-    required
-  />
-</div>
-
+            {/* Location */}
+            <div className="flex flex-col">
+              <label className="mb-1 font-semibold text-gray-700">Location</label>
+              <input
+                name="location"
+                value={formData.location}
+                onChange={handleChange}
+                placeholder="Enter location"
+                className="px-4 py-2 border rounded-lg"
+                required
+              />
+            </div>
 
             {/* Department */}
             <div className="flex flex-col">
@@ -362,39 +446,55 @@ const EditEmployee = () => {
             </div>
 
             {/* Profile Image */}
-            <div className="flex flex-col">
+            <div className="flex flex-col md:col-span-2">
               <label className="mb-1 font-semibold text-gray-700">Profile Image</label>
-              <input type="file" onChange={handleFileChange} className="mb-2" />
-              {profileImage && (
+              <input 
+                type="file" 
+                onChange={handleFileChange} 
+                className="mb-2" 
+                accept="image/*"
+              />
+              {formData.profileImage && (
                 <img
-                  src={`http://localhost:5000/${profileImage}`}
+                  src={`http://localhost:5000/${formData.profileImage}`}
                   alt="Profile"
                   className="w-32 h-32 object-cover rounded-full border border-gray-300"
                 />
               )}
             </div>
-          </form>
 
-         
+            {/* Address */}
+            <div className="flex flex-col md:col-span-2">
+              <label className="mb-1 font-semibold text-gray-700">Address</label>
+              <textarea
+                name="address"
+                value={formData.address}
+                onChange={handleChange}
+                rows={3}
+                placeholder="Enter address"
+                className="px-4 py-2 border rounded-lg"
+                required
+              />
+            </div>
+
             {/* Update Button */}
-<div className="mt-6 flex justify-center gap-4">
-  <button
-    type="submit"
-    className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg shadow-md transition"
-  >
-    Update Employee
-  </button>
+            <div className="flex justify-center gap-4 md:col-span-2 mt-4">
+              <button
+                type="submit"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg shadow-md transition"
+              >
+                Update Employee
+              </button>
 
-  <button
-    type="button"
-    onClick={() => navigate('/employees')}
-    className="bg-white text-blue-600 border-2 border-blue-600 font-semibold px-6 py-3 rounded-lg hover:bg-blue-50 shadow-md transition"
-  >
-    Cancel
-  </button>
-
-
-          </div>
+              <button
+                type="button"
+                onClick={() => navigate('/employees')}
+                className="bg-white text-blue-600 border-2 border-blue-600 font-semibold px-6 py-3 rounded-lg hover:bg-blue-50 shadow-md transition"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
         </div>
       </div>
 

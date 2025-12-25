@@ -9,7 +9,7 @@ import Team from './pages/Team'
 import AddTeam from './pages/AddTeam';
 import EditTeam from './pages/EditTeam';
 import Project from './pages/Project';
-import Tasks from './pages/Tasks';
+import Tickets from './pages/Tickets';
 import AddTask from './pages/AddTask';
 import MyTasks from './pages/MyTasks';
 import Attendance from './pages/Attendance';
@@ -31,7 +31,7 @@ function App() {
         <Route path="/add-team" element={<AddTeam />}/>
         <Route path="/edit-team/:id" element={<EditTeam />}/>
         <Route path="/projects" element={<Project />}/>
-        <Route path="/tasks" element={<Tasks />}/>
+        <Route path="/tickets" element={<Tickets />}/>
         <Route path="/AddTask" element={<AddTask />}/>
         <Route path="/my-tasks" element={<MyTasks />}/>
         <Route path="/attendance" element={<Attendance />}/>
